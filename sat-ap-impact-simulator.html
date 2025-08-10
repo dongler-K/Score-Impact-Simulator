@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SAT & AP Score Impact Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+:root{--bg:#0b1220;--panel:#0f172a;--card:#111827;--muted:#94a3b8;--text:#e5e7eb;--acc:#60a5fa;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444}
+body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#0b1220,#0b1220 60%,#0a0f1c);color:var(--text)}
+.wrap{max-width:1200px;margin:0 auto;padding:0 16px}
+.top{position:sticky;top:0;z-index:10;background:rgba(11,18,32,.7);backdrop-filter:blur(6px);border-bottom:1px solid #1f2937}
+.top .wrap{display:flex;gap:10px;align-items:center;padding:10px 0}
+.brand{font-weight:700}.tag{border:1px solid #334155;border-radius:999px;padding:2px 8px;font-size:12px;color:#cbd5e1;margin-left:6px}
+button{background:var(--acc);color:#0b1220;border:none;padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
+button.ghost{background:transparent;border:1px solid #334155;color:#cbd5e1}
+.app{display:grid;grid-template-columns:1fr;gap:16px;padding:18px 0}
+@media(min-width:980px){.app{grid-template-columns:420px 1fr}}
+.card{background:var(--card);border:1px solid #1f2937;border-radius:16px;padding:16px}
+h1,h2,h3{margin:6px 0 12px}
+label{display:block;margin-bottom:12px;font-weight:600;color:#cbd5e1}
+input,select{width:100%;margin-top:6px;background:#0b1326;border:1px solid #1f2937;border-radius:12px;color:#e5e7eb;padding:10px 12px}
+.range-row{display:flex;align-items:center;gap:10px}
+.range-row input[type="range"]{flex:1}
+.small{font-size:12px}.muted{color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#0b1326;border:1px solid #2a3346;color:#cbd5e1;font-size:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+hr{border-color:#1f2937;margin:10px 0}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kpi{background:#0b1326;border:1px solid #1f2937;border-radius:12px;padding:10px;text-align:center}
+.kpi .big{font-size:24px;font-weight:700}
+.bar{height:12px;background:#0b1326;border:1px solid #1f2937;border-radius:999px;overflow:hidden}
+.fill{height:100%;background:linear-gradient(90deg,#22c55e,#84cc16)}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{border-bottom:1px dashed #243045;padding:8px;text-align:left}
+.suggestion{border-left:3px solid #22c55e;padding-left:10px;margin:6px 0}
+.footer{border-top:1px solid #1f2937;margin:12px 0 20px;padding-top:12px;color:#9aa4b5;font-size:12px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">📈 SAT & AP Impact Simulator <span class="tag">Single‑file</span></div>
+    <div style="flex:1"></div>
+    <button id="btnShare" class="ghost">Share</button>
+    <button id="btnReset" class="ghost">Reset</button>
+    <button id="btnPrint" class="ghost">Print</button>
+  </div>
+</header>
+
+<main class="wrap app">
+  <!-- Left: Inputs -->
+  <section class="card">
+    <h2>Your Profile</h2>
+    <div class="grid2">
+      <label>GPA (unweighted, 0–4.0)
+        <input id="gpa" type="number" min="0" max="4" step="0.01" value="3.70">
+      </label>
+      <label>SAT (400–1600)
+        <input id="sat" type="number" min="400" max="1600" step="10" value="1450">
+      </label>
+    </div>
+    <div class="grid2">
+      <label>APs taken (count)
+        <input id="apCount" type="number" min="0" max="20" value="6">
+      </label>
+      <label>Avg AP score (1–5)
+        <input id="apAvg" type="number" min="1" max="5" step="0.1" value="4.2">
+      </label>
+    </div>
+    <label>Course rigor (honors/IB/AP load)
+      <div class="range-row">
+        <input id="rigor" type="range" min="1" max="5" step="1" value="4">
+        <span class="badge" id="rigorVal">4</span>
+      </div>
+    </label>
+    <label>Extracurricular strength
+      <div class="range-row">
+        <input id="ec" type="range" min="1" max="5" step="1" value="3">
+        <span class="badge" id="ecVal">3</span>
+      </div>
+    </label>
+    <label>Target focus
+      <select id="focus">
+        <option value="general">General US Selective</option>
+        <option value="nus_bza">NUS Business Analytics</option>
+        <option value="kaist_eng">KAIST Engineering</option>
+        <option value="berkeley_cs">UC Berkeley (CS/Engineering)</option>
+      </select>
+    </label>
+    <div class="row">
+      <button id="calc">Calculate</button>
+      <button id="whatBoosts" class="ghost">Suggest biggest boosts</button>
+      <button id="exportJSON" class="ghost">Export JSON</button>
+      <button id="exportCSV" class="ghost">Export CSV</button>
+    </div>
+    <hr>
+    <div class="small muted">Heuristic only. Not affiliated with any university. Use as a planning tool, not a predictor.</div>
+  </section>
+
+  <!-- Right: Results -->
+  <section class="card">
+    <h2>Results</h2>
+    <div class="kpis">
+      <div class="kpi"><div class="small muted">Composite Index</div><div id="kpiIndex" class="big">—</div></div>
+      <div class="kpi"><div class="small muted">Profile Tier</div><div id="kpiTier" class="big">—</div></div>
+      <div class="kpi"><div class="small muted">Study Focus</div><div id="kpiFocus" class="big">—</div></div>
+    </div>
+    <hr>
+    <h3>Chances by Target</h3>
+    <table class="table" id="chanceTable">
+      <thead><tr><th>Target</th><th style="width:50%">Likelihood</th><th>Est.</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <hr>
+    <h3>Recommendations</h3>
+    <div id="recs"></div>
+  </section>
+</main>
+
+<div class="wrap footer">© <span id="year"></span> Impact Simulator. For learning & planning only.</div>
+
+<script>
+const $=s=>document.querySelector(s);const $$=s=>Array.from(document.querySelectorAll(s));
+byId=id=>document.getElementById(id);
+byId('year').textContent=(new Date()).getFullYear();
+byId('rigor').addEventListener('input',e=> byId('rigorVal').textContent=e.target.value);
+byId('ec').addEventListener('input',e=> byId('ecVal').textContent=e.target.value);
+
+// Target profiles (centers + weights). Tune as needed.
+const TARGETS=[
+  {key:'general', name:'US Selective (general)', center:{gpa:3.8,sat:1460,ap:6,apavg:4.0,rigor:4,ec:3}, weight:{gpa:2.2,sat:1.8,ap:0.8,apavg:1.2,rigor:1.2,ec:1.0}},
+  {key:'nus_bza', name:'NUS Business Analytics', center:{gpa:3.9,sat:1500,ap:7,apavg:4.2,rigor:4,ec:3}, weight:{gpa:2.5,sat:2.0,ap:1.0,apavg:1.4,rigor:1.1,ec:0.8}},
+  {key:'kaist_eng', name:'KAIST Engineering', center:{gpa:3.9,sat:1520,ap:7,apavg:4.2,rigor:4,ec:3}, weight:{gpa:2.3,sat:2.2,ap:1.1,apavg:1.0,rigor:1.3,ec:0.6}},
+  {key:'berkeley_cs', name:'UC Berkeley (Engineering/CS)', center:{gpa:3.95,sat:1530,ap:8,apavg:4.3,rigor:5,ec:3}, weight:{gpa:2.6,sat:2.1,ap:1.2,apavg:1.0,rigor:1.3,ec:0.9}},
+];
+
+function clamp(x,min,max){ return Math.max(min,Math.min(max,x)); }
+function normGPA(g){ return clamp((g-2.5)/1.5, 0, 1); } // 2.5..4.0 -> 0..1
+function normSAT(s){ return clamp((s-1100)/500, 0, 1); } // 1100..1600 -> 0..1
+function normAPCount(n){ return clamp(n/10, 0, 1); } // 0..10 -> 0..1
+function normAPAvg(a){ return clamp((a-2)/3, 0, 1); } // 2..5 -> 0..1
+function norm15(x){ return clamp((x-1)/4, 0, 1); } // 1..5 -> 0..1
+
+function compositeIndex(p){
+  const z = (
+    2.2*normGPA(p.gpa) +
+    2.0*normSAT(p.sat) +
+    1.0*normAPCount(p.ap) +
+    1.2*normAPAvg(p.apavg) +
+    1.0*norm15(p.rigor) +
+    0.8*norm15(p.ec)
+  ) / (2.2+2.0+1.0+1.2+1.0+0.8);
+  return Math.round(z*100);
+}
+
+function likelihoodAgainstTarget(p, tgt){
+  const c=tgt.center,w=tgt.weight;
+  const d =
+    w.gpa   * Math.abs(normGPA(p.gpa)-normGPA(c.gpa)) +
+    w.sat   * Math.abs(normSAT(p.sat)-normSAT(c.sat)) +
+    w.ap    * Math.abs(normAPCount(p.ap)-normAPCount(c.ap)) +
+    w.apavg * Math.abs(normAPAvg(p.apavg)-normAPAvg(c.apavg)) +
+    w.rigor * Math.abs(norm15(p.rigor)-norm15(c.rigor)) +
+    w.ec    * Math.abs(norm15(p.ec)-norm15(c.ec));
+
+  const k = 3.6;
+  const x = 1 - d/ (w.gpa+w.sat+w.ap+w.apavg+w.rigor+w.ec);
+  const prob = 1/(1+Math.exp(-k*(x-0.55)));
+  return clamp(prob,0,1);
+}
+
+function tierFromIndex(idx){
+  if(idx>=85) return 'Top';
+  if(idx>=70) return 'Strong';
+  if(idx>=55) return 'Competitive';
+  return 'Developing';
+}
+
+function estimateFocus(p){
+  const tgt = TARGETS.find(t=>t.key===byId('focus').value) || TARGETS[0];
+  const gaps = {
+    GPA: normGPA(tgt.center.gpa) - normGPA(p.gpa),
+    SAT: normSAT(tgt.center.sat) - normSAT(p.sat),
+    "AP Count": normAPCount(tgt.center.ap) - normAPCount(p.ap),
+    "AP Avg": normAPAvg(tgt.center.apavg) - normAPAvg(p.apavg),
+    Rigor: norm15(tgt.center.rigor) - norm15(p.rigor),
+    ECs: norm15(tgt.center.ec) - norm15(p.ec)
+  };
+  const sorted = Object.entries(gaps).sort((a,b)=> b[1]-a[1]);
+  return sorted[0][0];
+}
+
+function gather(){
+  return {
+    gpa: Number(byId('gpa').value||0),
+    sat: Number(byId('sat').value||400),
+    ap: Number(byId('apCount').value||0),
+    apavg: Number(byId('apAvg').value||1),
+    rigor: Number(byId('rigor').value||1),
+    ec: Number(byId('ec').value||1),
+    focus: byId('focus').value
+  };
+}
+
+function render(){
+  const p = gather();
+  const idx = compositeIndex(p);
+  byId('kpiIndex').textContent = idx;
+  byId('kpiTier').textContent = tierFromIndex(idx);
+  byId('kpiFocus').textContent = estimateFocus(p);
+
+  const tbody = byId('chanceTable').querySelector('tbody');
+  tbody.innerHTML='';
+  TARGETS.forEach(t=>{
+    const prob = likelihoodAgainstTarget(p,t);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${t.name}</td>
+      <td><div class="bar"><div class="fill" style="width:${Math.round(prob*100)}%"></div></div></td>
+      <td>${Math.round(prob*100)}%</td>`;
+    tbody.appendChild(tr);
+  });
+
+  const recs = [];
+  const deltas = {
+    'Raise SAT +60': {...p, sat: clamp(p.sat+60, 400, 1600)},
+    'Raise GPA +0.1': {...p, gpa: clamp(Number((p.gpa+0.1).toFixed(2)), 0, 4)},
+    'Add 1 AP (same avg)': {...p, ap: p.ap+1},
+    'Improve AP avg +0.2': {...p, apavg: clamp(Number((p.apavg+0.2).toFixed(1)), 1, 5)},
+    'Increase rigor +1': {...p, rigor: clamp(p.rigor+1, 1, 5)},
+    'Stronger ECs +1': {...p, ec: clamp(p.ec+1, 1, 5)},
+  };
+  const focusKey = byId('focus').value;
+  const t = TARGETS.find(x=>x.key===focusKey) || TARGETS[0];
+  const base = likelihoodAgainstTarget(p,t);
+  Object.entries(deltas).forEach(([label,pp])=>{
+    const gain = likelihoodAgainstTarget(pp,t) - base;
+    recs.push({label, gain});
+  });
+  recs.sort((a,b)=> b.gain-a.gain);
+  const box = byId('recs'); box.innerHTML='';
+  recs.slice(0,3).forEach(r=>{
+    const div=document.createElement('div');
+    const pct = Math.round(r.gain*100);
+    const tip = r.label.includes('SAT') ? 'Focus on Math evidence-based practice; timed full tests.' :
+                r.label.includes('GPA') ? 'Aim for A-level consistency; seek extra credit or retakes where legit.' :
+                r.label.includes('Add 1 AP') ? 'Add Stats for data signal or Lang for writing depth.' :
+                r.label.includes('AP avg') ? 'Target weak APs with past papers & concept notebooks.' :
+                r.label.includes('rigor') ? 'Increase depth; avoid stacking too many labs in one term.' :
+                'Depth > breadth: leadership, awards, quantifiable impact.';
+    div.className='suggestion';
+    div.textContent = `${r.label}: ~+${pct} pts likelihood. ${tip}`;
+    box.appendChild(div);
+  });
+}
+
+byId('calc').addEventListener('click', render);
+['gpa','sat','apCount','apAvg','rigor','ec','focus'].forEach(id=> byId(id).addEventListener('change', render));
+
+byId('whatBoosts').addEventListener('click', ()=>{
+  render();
+  window.scrollTo({top: document.body.scrollHeight, behavior:'smooth'});
+});
+
+byId('exportJSON').addEventListener('click', ()=>{
+  const p = gather();
+  const data = {input:p, snapshot: byId('chanceTable').querySelector('tbody').innerText};
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='impact-snapshot.json'; a.click();
+});
+byId('exportCSV').addEventListener('click', ()=>{
+  const p = gather();
+  const rows = [['Metric','Value'],
+    ['GPA',p.gpa],['SAT',p.sat],['AP count',p.ap],['AP avg',p.apavg],['Rigor',p.rigor],['ECs',p.ec],
+    [],['Target','Likelihood%'],
+  ];
+  TARGETS.forEach(t=> rows.push([t.name, Math.round(likelihoodAgainstTarget(p,t)*100)]));
+  const csv = rows.map(r=> r.length? r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',') : '').join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='impact-snapshot.csv'; a.click();
+});
+
+byId('btnShare').addEventListener('click', ()=>{
+  const p = gather();
+  const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(p))));
+  const link = location.origin + location.pathname + '#s=' + b64;
+  navigator.clipboard.writeText(link).then(()=> alert('Link copied to clipboard!'));
+});
+
+byId('btnReset').addEventListener('click', ()=>{
+  localStorage.removeItem('impact_state');
+  location.hash=''; location.reload();
+});
+
+byId('btnPrint').addEventListener('click', ()=> window.print());
+
+function save(){ localStorage.setItem('impact_state', JSON.stringify(gather())); }
+function load(){
+  const hash = location.hash.startsWith('#s=') ? location.hash.slice(3) : null;
+  if(hash){
+    try {
+      const p = JSON.parse(decodeURIComponent(escape(atob(hash))));
+      if(p){ byId('gpa').value=p.gpa; byId('sat').value=p.sat; byId('apCount').value=p.ap; byId('apAvg').value=p.apavg; byId('rigor').value=p.rigor; byId('rigorVal').textContent=p.rigor; byId('ec').value=p.ec; byId('ecVal').textContent=p.ec; byId('focus').value=p.focus||'general'; }
+    } catch(e){ console.warn('Bad share link'); }
+  } else {
+    const raw = localStorage.getItem('impact_state');
+    if(raw){ try{ const p=JSON.parse(raw); if(p){ byId('gpa').value=p.gpa; byId('sat').value=p.sat; byId('apCount').value=p.ap; byId('apAvg').value=p.apavg; byId('rigor').value=p.rigor; byId('rigorVal').textContent=p.rigor; byId('ec').value=p.ec; byId('ecVal').textContent=p.ec; byId('focus').value=p.focus||'general'; } }catch(e){} }
+  }
+  render();
+}
+['gpa','sat','apCount','apAvg','rigor','ec','focus'].forEach(id=> byId(id).addEventListener('input', save));
+document.addEventListener('DOMContentLoaded', load);
+</script>
+</body>
+</html>
